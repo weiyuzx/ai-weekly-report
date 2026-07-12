@@ -1,0 +1,10 @@
+# Python
+__pycache__/
+*.pyc
+
+# 数据
+raw/
+filtered/
+
+# 输出产物
+output/
