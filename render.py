@@ -80,54 +80,17 @@ def read_json(data_dir, name):
     return data.get("items", [])
 
 
-# pipeline_tag 中文映射
-PIPELINE_CN = {
-    "text-generation": "文本生成",
-    "text2text-generation": "文本到文本",
-    "image-text-to-text": "图文理解",
-    "text-to-image": "文生图",
-    "image-generation": "图像生成",
-    "feature-extraction": "特征提取",
-    "fill-mask": "填空",
-    "token-classification": "词元分类",
-    "text-classification": "文本分类",
-    "summarization": "摘要",
-    "translation": "翻译",
-    "question-answering": "问答",
-    "conversational": "对话",
-    "automatic-speech-recognition": "语音识别",
-    "audio-to-audio": "音频转换",
-    "image-classification": "图像分类",
-    "object-detection": "目标检测",
-    "image-segmentation": "图像分割",
-    "text-to-speech": "语音合成",
-    "visual-question-answering": "视觉问答",
-    "document-question-answering": "文档问答",
-    "zero-shot-image-classification": "零样本图像分类",
-    "image-to-text": "图生文",
-    "mask-generation": "掩码生成",
-    "reinforcement-learning": "强化学习",
-    "graph-ml": "图机器学习",
-    "table-question-answering": "表格问答",
-    "tabular-classification": "表格分类",
-    "tabular-regression": "表格回归",
-    "multiple-choice": "多选题",
-    "image-to-video": "图生视频",
-    "video-to-text": "视频理解",
-    "video-classification": "视频分类",
-}
-
 
 def _hf_card_html(item, idx):
     title = item.get("title", "")
     pipeline = item.get("pipeline_tag", "")
-    pipeline_display = PIPELINE_CN.get(pipeline, pipeline)
+    pipeline_display = pipeline
     likes = format_likes(item.get("likes"))
     downloads = format_downloads(item.get("downloads"))
     params = format_params(item.get("num_parameters"))
     license_tag = item.get("license", "")
 
-    tags_html = f'<span class="tag pipeline">{pipeline_display}</span>'
+    tags_html = f'<span class="tag pipeline">{pipeline}</span>'
     if likes:
         tags_html += f'<span class="tag stat">{likes}</span>'
     if downloads:

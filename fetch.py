@@ -578,7 +578,7 @@ def fetch_huggingface():
 
     # 1. 列表页
     r = requests.get(
-        "https://huggingface.co/models?num_parameters=min:24B&library=transformers,safetensors&sort=trending",
+        "https://huggingface.co/models?num_parameters=min:32B&library=transformers,safetensors&sort=trending",
         timeout=15, headers=HEADERS
     )
     decoded = html_mod.unescape(r.text)

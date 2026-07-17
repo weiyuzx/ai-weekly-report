@@ -37,7 +37,7 @@ GITHUB_BLACKLIST = [
     r"\bmeetly\b|\bmeeting\b",
     r"\bvalue\s+investing?\b",
     r"\bvideo\b", r"video.?generat", r"short.?video", r"\bcapcut\b", r"\becommerce\b", r"\bmarketing\b",
-    r"\bnft\b", r"\bdefi\b", r"\bgame\b", r"\bgaming\b", r"\bmusic\b", r"\bsong\b",
+    r"\bnft\b", r"\bdefi\b", r"\bgames?\b", r"\bgaming\b", r"\bmusic\b", r"\bsong\b",
     r"\brecipe\b", r"\bcook\b", r"\bfood\b", r"\btravel\b", r"\bhotel\b", r"\bbooking\b",
     r"\bdating\b", r"social.?media", r"\binfluencer\b",
     r"\bdocuseal\b", r"\bdocsign\b", r"\bsigning\b",
@@ -55,6 +55,8 @@ HF_BLACKLIST = [
     r"\bbiology\b", r"\bprotein\b", r"\bgene\b", r"\bdrug\b", r"\bpharma\b",
     r"\bmusic\b", r"audio.?generat", r"\btts\b", r"speech.?synthesis",
     r"\bbench\b",
+    r"\brobotics?\b",
+    r"abliterated",
 ]
 
 # AIBase 专属黑名单
@@ -94,6 +96,7 @@ AIBASE_BLACKLIST = [
     # 平台治理/消费硬件
     r"小红书", r"ai眼镜", r"带货",
     # 视频编辑/图像生成工具（非大模型本身）
+    r"\brobotics?\b",
     r"视频编辑",
     r"视频",
     r"电影",
@@ -174,16 +177,21 @@ def filter_github(items):
 
 def filter_huggingface(items):
     """过滤HuggingFace模型条目"""
+    MIN_PARAMS = 32e9  # 32B
     result = []
     for item in items:
         title = item.get("title", "")
         pipeline = item.get("pipeline_tag", "")
         summary = item.get("summary", "")
+        num_params = int(item.get("num_parameters", 0) or 0)
         full_text = f"{title} {pipeline} {summary}"
 
         if matches_blacklist(full_text, TITLE_BLACKLIST):
             continue
         if matches_blacklist(full_text, HF_BLACKLIST):
+            continue
+        # 参数量兜底过滤：未标注或低于32B的剔除
+        if num_params > 0 and num_params < MIN_PARAMS:
             continue
 
         result.append(item)
