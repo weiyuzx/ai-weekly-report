@@ -108,7 +108,7 @@ def _hf_card_html(item, idx):
 
     update_html = ""
     if last_commit:
-        update_html = f'<p class="card-update">🔄 {last_commit}</p>'
+        update_html = f'<p class="card-update">更新: {last_commit}</p>'
 
     return f'''<div class="card">
     <p class="card-title">{idx}. {title}</p>
@@ -157,9 +157,9 @@ def _card_grid(items, card_fn, start_idx):
 def build_cards(hf_items, gh_items):
     """构建 HF + GitHub 卡片区域"""
     parts = []
-    parts.append(_section_header("🤗 HuggingFace 热门模型", "hf"))
+    parts.append(_section_header("HuggingFace 热门模型", "hf"))
     parts.append(_card_grid(hf_items, _hf_card_html, 1))
-    parts.append(_section_header("💻 GitHub 热门项目", "gh"))
+    parts.append(_section_header("GitHub 热门项目", "gh"))
     parts.append(_card_grid(gh_items, _gh_card_html, 1))
     return '\n'.join(parts)
 
@@ -208,7 +208,7 @@ def build_html(data_dir, output_path):
 
 {cards_html}
 
-<h2 class="news">📰 行业资讯</h2>
+<h2 class="news">行业资讯</h2>
 {news_html}
 
 <div class="footer">AI行业近一周热点 · 聚焦大模型和智能体领域</div>

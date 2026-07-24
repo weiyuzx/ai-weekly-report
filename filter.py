@@ -65,7 +65,7 @@ AIBASE_BLACKLIST = [
     r"短视频", r"直播带货", r"电商", r"营销", r"广告投放",
     r"股价", r"市值", r"人事变动", r"组织架构.*调整",
     # 融资/商业化
-    r"融资", r"增资", r"IPO", r"商业化",
+    r"融资", r"增资", r"IPO",
     r"订阅付费", r"订阅服务", r"月费", r"付费方案",
     # 产品小更新/无关产品
     r"贴图", r"表情包", r"壁纸", r"铃声",
@@ -79,17 +79,18 @@ AIBASE_BLACKLIST = [
     r"积分福利",
     r"SpaceX", r"航天",
     r"搜狐",
-    r"短剧",
+    r"短剧", r"网剧",
     r"模型委员会",
-    r"语音",
+    r"语音", r"音频",
     r"Music",
     r"music",
     r"音乐",
-    r"汽车",
-    r"美图秀秀",
+    r"汽车", r"小鹏集团",
+    r"美图秀秀", r"修图",
     r"网约车",
     r"nba",
     r"食用",
+        r"影视飓风",
     r"3D",
     r"高考",
     r"宠物",
@@ -192,6 +193,10 @@ def filter_huggingface(items):
             continue
         # 参数量兜底过滤：未标注或低于32B的剔除
         if num_params > 0 and num_params < MIN_PARAMS:
+            continue
+        # likes兜底过滤：低于100的剔除（社区认可度门槛）
+        likes = item.get("likes", 0) or 0
+        if likes < 100:
             continue
 
         result.append(item)
