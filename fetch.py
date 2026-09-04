@@ -390,6 +390,7 @@ def extract_readme_summary(readme_text):
     def clean_and_extract(section_text):
         paras = re.split(r'\n\s*\n', section_text.strip())
         candidate = ""  # 短文本候选
+        best_long = ""  # 最长段落（>= 30 字符），优先返回
         for para in paras:
             lines = []
             for line in para.strip().split('\n'):
@@ -440,34 +441,38 @@ def extract_readme_summary(readme_text):
             if is_navigation_text(text):
                 continue
             if len(text) >= 15:
-                # 长文本直接返回，短文本（15~29字符）有实质内容可作为候选
+                # 长文本：记录最长段落，不立即返回
                 if len(text) >= 30:
-                    if len(text) <= 300:
-                        return text
-                    # 超过300字符，需要截断
-                    truncated = text[:300]
-                    # 优先在英文句末标点截断
-                    for sep in '.!?;':
-                        last_sep = truncated.rfind(sep)
-                        if last_sep > 30:
-                            return truncated[:last_sep + 1]
-                    # 优先在中文句末标点截断
-                    for sep in '。！？；':
-                        last_sep = truncated.rfind(sep)
-                        if last_sep > 30:
-                            return truncated[:last_sep + 1]
-                    # 在逗号处截断（至少保留100字符）
-                    for sep in ',，':
-                        last_sep = truncated.rfind(sep)
-                        if last_sep > 100:
-                            return truncated[:last_sep + 1]
-                    # 兜底：硬截300
-                    return truncated
+                    if len(text) > len(best_long):
+                        best_long = text
                 else:
-                    # 短文本：先记住作为候选，继续找更长的段落
+                    # 短文本（15~29字符）：作为候选
                     if not candidate:
                         candidate = text
                     continue
+
+        # 优先返回最长段落（> 300 需截断）
+        if best_long:
+            if len(best_long) <= 300:
+                return best_long
+            truncated = best_long[:300]
+            # 在截断点附近（200~300）找句末标点
+            for sep in '.!?;':
+                last_sep = truncated.rfind(sep)
+                if last_sep > 200:
+                    return truncated[:last_sep + 1]
+            # 在截断点附近找中文句末标点
+            for sep in '。！？；':
+                last_sep = truncated.rfind(sep)
+                if last_sep > 200:
+                    return truncated[:last_sep + 1]
+            # 在逗号处截断（至少保留150字符）
+            for sep in ',，':
+                last_sep = truncated.rfind(sep)
+                if last_sep > 150:
+                    return truncated[:last_sep + 1]
+            # 兜底：硬截300
+            return truncated
         return candidate if candidate else ""
 
     h2_positions = [(m.start(), m.group()) for m in re.finditer(r'^##\s+.+$', body, re.MULTILINE)]

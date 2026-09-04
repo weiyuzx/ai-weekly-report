@@ -44,9 +44,26 @@ GITHUB_BLACKLIST = [
     r"vscode.?theme", r"\btheme\b", r"\btabular.?data\b",
     r"ai.?to.?earn", r"earn.?money",
     # 音频/语音/TTS类
-    r"\btts\b", r"text-to-speech", r"\bspeech\b", r"\bvoice\b", r"\baudio\b",
+    r"\btts\b", r"text.?to.?speech", r"\bspeech\b", r"voice.?clone", r"\baudio\b",
     # IPTV类
     r"\biptv\b",
+    # 2026-07-31 补充：非 Agent 方向
+    r"\bminecraft\b",
+    r"\bcms\b",
+    r"\bwordpress\b",
+    r"\bgis\b", r"geospatial",
+    r"\bgrammar\b", r"语法检查",
+    r"\b建筑\b", r"3D\s+architect",
+    r"\btopcoat\b",
+    r"\bfaceswap\b", r"换脸",
+    # 2026-08-14: 非AI项目
+    r"\bdrawdb\b", r"\bmanim\b", r"\bcomfyui\b", r"教材",
+    # 2026-08-21: 非AI项目
+    r"logitech", r"omarchy", r"macro-inc",
+    r"\brobots?\b", r"holehe", r"\bmojo\b", r"bookorbit",
+    # 2026-09-04: 非 AI 项目（trending 噪音），关键字经用户逐个确认；
+    # 3d 泛化由用户拍板：3D 生成/重建类不算周报方向，历史遗留一并清理；zod 保留故不加 schema 类词
+    r"\bseo\b", r"\b3d\b", r"nitter", r"ipatool", r"gods-eye-view", r"fmtlib",
 ]
 
 # HuggingFace 黑名单（模型名+pipeline_tag匹配）
@@ -54,16 +71,19 @@ HF_BLACKLIST = [
     r"\bmedical\b", r"\bclinic\b", r"\bdoctor\b", r"\bpatient\b", r"\bhealth\b",
     r"\bbiology\b", r"\bprotein\b", r"\bgene\b", r"\bdrug\b", r"\bpharma\b",
     r"\bmusic\b", r"audio.?generat", r"\btts\b", r"speech.?synthesis",
-    r"\bbench\b",
+    # bench 类评测移出：改为仅在 filter_huggingface 中按标题尾缀匹配，
+    # 避免全文匹配误伤模型卡正文里的跑分描述（2026-09-04 误杀 zai-org/GLM-5.3）
     r"\brobotics?\b",
     r"abliterated",
+    # 2026-09-04: 去审查衍生镜像账号（orcarouter/dealignai 等）
+    r"uncensored",
 ]
 
 # AIBase 专属黑名单
 AIBASE_BLACKLIST = [
     # 无关行业/平台
     r"短视频", r"直播带货", r"电商", r"营销", r"广告投放",
-    r"股价", r"市值", r"人事变动", r"组织架构.*调整",
+    r"股价", r"市值", r"人事", r"组织架构.*调整",
     # 融资/商业化
     r"融资", r"增资", r"IPO",
     r"订阅付费", r"订阅服务", r"月费", r"付费方案",
@@ -86,7 +106,7 @@ AIBASE_BLACKLIST = [
     r"music",
     r"音乐",
     r"汽车", r"小鹏集团",
-    r"美图秀秀", r"修图",
+    r"美图秀秀", r"修图", r"影像",
     r"网约车",
     r"nba",
     r"食用",
@@ -109,6 +129,9 @@ AIBASE_BLACKLIST = [
     r"ai写作", r"连锁", r"灌水", r"sk集团",
     # 社交/诈骗/餐饮/出行
     r"诈骗", r"社交", r"餐饮", r"出行",
+    r"音轨", r"车载", r"七夕", r"行政处罚", r"物流", r"论文", r"配售",
+    # 2026-08-14: 用户指定
+    r"米哈游", r"酒店", r"摄像机",
 ]
 
 # AITNT 不用黑名单，纯白名单逻辑
@@ -118,7 +141,7 @@ def matches_blacklist(text, patterns):
     """检查文本是否命中任一黑名单规则"""
     text_lower = text.lower()
     for pattern in patterns:
-        if re.search(pattern, text_lower):
+        if re.search(pattern, text_lower, re.IGNORECASE):
             return True
     return False
 
@@ -191,6 +214,9 @@ def filter_huggingface(items):
             continue
         if matches_blacklist(full_text, HF_BLACKLIST):
             continue
+        # bench 类评测数据集：仅按标题匹配（以 bench 结尾），不扫正文
+        if re.search(r"bench$", title.strip(), re.IGNORECASE):
+            continue
         # 参数量兜底过滤：未标注或低于32B的剔除
         if num_params > 0 and num_params < MIN_PARAMS:
             continue
@@ -223,8 +249,9 @@ def deduplicate_hf_series(items):
         return items
 
     def series_key(title):
-        # 去掉 org/ 前缀
+        # 拆出 org 与模型名（DeepSeek 例外判断需要 org）
         parts = title.split('/')
+        org = parts[0] if len(parts) > 1 else ''
         name = parts[-1] if len(parts) > 1 else title
         # 1. 去掉量化格式标记块：qat-q4_0, qat-w4a16 等
         name = re.sub(r'-qat(?:-[A-Za-z0-9_.]+)+', '', name, flags=re.IGNORECASE)
@@ -234,10 +261,18 @@ def deduplicate_hf_series(items):
         name = re.sub(r'-(?:\d+(\.\d+)?[BMK][A-Za-z0-9]*(?:-[A-Za-z0-9.]+)*)$', '', name, flags=re.IGNORECASE)
         # 4. 去掉残余的 unquantized 后缀
         name = re.sub(r'-unquant(?:ified|ized)?$', '', name, flags=re.IGNORECASE)
+        # 5. 去掉末尾版本号：-2.1, -v2.5, -V1.5, -3 等
+        name = re.sub(r'-v?\d+(\.\d+)*$', '', name, flags=re.IGNORECASE)
+        # 6. 去掉规格代号（XS/S/M/L/mini/pro 等），同系列合并
+        #    DeepSeek 例外：Flash 与 Pro 是能力不同的模型，保留区分
+        if 'deepseek' in org.lower():
+            name = re.sub(r'-(?:xs|s|m|l|xl|small|large|nano)$', '', name, flags=re.IGNORECASE)
+        else:
+            name = re.sub(r'-(?:xs|s|m|l|xl|mini|pro|small|large|nano|micro|beta|dev)$', '', name, flags=re.IGNORECASE)
         return name
 
-    # 按 likes 降序排列（最高优先）
-    items_sorted = sorted(items, key=lambda x: int(x.get('likes', 0) or 0), reverse=True)
+    # 按参数量降序排列（规模大/能力强优先），参数量缺失或为 0 时回退到 likes
+    items_sorted = sorted(items, key=lambda x: (int(x.get('num_parameters', 0) or 0), int(x.get('likes', 0) or 0)), reverse=True)
 
     kept = []
     kept_keys = set()
