@@ -8,3 +8,6 @@ filtered/
 
 # 输出产物
 output/
+
+# 翻译缓存（周维度）
+cache/
