@@ -28,7 +28,9 @@ NOW = datetime.now(timezone(timedelta(hours=8)))
 
 # Google Translate (gtx)
 GT_URL = "https://translate.googleapis.com/translate_a/single"
-GT_PARAMS = {"client": "gtx", "sl": "en", "tl": "zh-CN", "dt": "t"}
+# 2026-09-18 修复：sl 由写死 "en" 改 "auto"（AliceAI-T5 事件：俄语源+en 声明，
+# 逐条翻译失败回退原文直接上刊；auto 让 gtx 自动检测源语言）
+GT_PARAMS = {"client": "gtx", "sl": "auto", "tl": "zh-CN", "dt": "t"}
 
 MAX_PACK_CHARS = 6000   # 单包字符上限（含分隔符开销），超出自动分包
 PACK_RETRIES = 2        # 打包请求失败重试次数
@@ -48,6 +50,14 @@ def find_latest_filtered_dir():
 def text_key(text):
     """原文指纹：sha256。原文不变则 key 不变，变一个字符则完全不同"""
     return hashlib.sha256(text.strip().encode("utf-8")).hexdigest()
+
+
+def cyrillic_ratio(t):
+    """西里尔字符占比（俄语检测）"""
+    if not t:
+        return 0.0
+    cyr = sum(1 for c in t if '\u0400' <= c <= '\u04FF')
+    return cyr / len(t)
 
 
 def load_cache(path):
@@ -197,9 +207,23 @@ def main():
         for i, t in enumerate(miss):
             if i in results:
                 t["cn"] = clean(results[i])
-                STATS["translated"] += 1
-                cache[t["key"]] = {"cn": t["cn"],
-                                   "ts": NOW.isoformat(timespec="seconds")}
+                # 2026-09-18 修复：gtx打包模式对西里尔源会半翻译（AliceAI事件：
+                # 英俄混包按句检测，俄语条只翻一段），质检残留→单条重翻
+                src_cyr = cyrillic_ratio(t["text"])
+                if src_cyr > 0.15 and cyrillic_ratio(t["cn"]) > 0.10:
+                    try:
+                        STATS["api_calls"] += 1
+                        t["cn"] = clean(call_gt(t["text"]))
+                        print(f"    ↻ 西里尔质检触发单条重翻: {t['field']}#{t['idx']}", flush=True)
+                    except Exception as e:
+                        print(f"    ✗ 单条重翻失败: {e}", flush=True)
+                if src_cyr <= 0.15 or cyrillic_ratio(t["cn"]) < 0.10:
+                    STATS["translated"] += 1
+                    cache[t["key"]] = {"cn": t["cn"],
+                                       "ts": NOW.isoformat(timespec="seconds")}
+                else:
+                    t["cn"] = t["text"]  # 仍残留：兜底原文，不入缓存
+                    STATS["failed"] += 1
             else:
                 t["cn"] = t["text"]  # 兜底：保留英文，不入缓存，重跑补翻
                 STATS["failed"] += 1

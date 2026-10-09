@@ -40,7 +40,14 @@ GITHUB_BLACKLIST = [
     r"\bnft\b", r"\bdefi\b", r"\bgames?\b", r"\bgaming\b", r"\bmusic\b", r"\bsong\b",
     r"\brecipe\b", r"\bcook\b", r"\bfood\b", r"\btravel\b", r"\bhotel\b", r"\bbooking\b",
     r"\bdating\b", r"social.?media", r"\binfluencer\b",
+    r"home.?automation", r"smart.?home",
     r"\bdocuseal\b", r"\bdocsign\b", r"\bsigning\b",
+    # 2026-09-26 鑫总定：纯网络基建混入周榜，按项目名杀（零误伤）
+    r"\bquiche\b", r"\bcilium\b",
+    # 2026-10-04 鑫总定：前端框架/嵌入修复工具等零AI基建混入周榜
+    r"\bnext\.?js\b", r"\bflutter\b", r"\bfxembed\b",
+    # 2026-10-09 鑫总定：PS主机移植/Epic调试器零AI（健身用 fitness，gym有RL风险不用）
+    r"\bps[345]\b", r"\bplaystation\b", r"\braddebugger\b", r"\bfitness\b", r"\bworkouts?\b",
     r"vscode.?theme", r"\btheme\b", r"\btabular.?data\b",
     r"ai.?to.?earn", r"earn.?money",
     # 音频/语音/TTS类
@@ -83,6 +90,12 @@ HF_BLACKLIST = [
 AIBASE_BLACKLIST = [
     # 无关行业/平台
     r"短视频", r"直播带货", r"电商", r"营销", r"广告投放",
+    # 2026-09-18 鑫总定词
+    r"培训", r"维权",
+    # 2026-09-26 鑫总定词
+    r"Hy翻译", r"盒马", r"阿宝", r"影视",
+    # 2026-10-04 鑫总定词
+    r"麦当劳",
     r"股价", r"市值", r"人事", r"组织架构.*调整",
     # 融资/商业化
     r"融资", r"增资", r"IPO",

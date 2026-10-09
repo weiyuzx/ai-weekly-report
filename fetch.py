@@ -326,6 +326,14 @@ def extract_readme_summary(readme_text):
     """
     body = re.sub(r'^---[\s\S]*?---\s*', '', readme_text, count=1)
     body = html_mod.unescape(body)
+    # 2026-09-18 修复：围栏代码块整体剔除（此前逐行白名单杀不干净，
+    # AliceAI-T5 的 adapter_path/tokenizer 赋值行漏过成为“最长段落”）
+    body = re.sub(r'```.*?```', ' ', body, flags=re.S)
+    # 未闭合围栏兑底（README 截断场景）
+    body = re.sub(r'```.*$', ' ', body, flags=re.S)
+    # 2026-09-18 修复：HTML 表格整体剔除（此前只认 markdown 管道符，
+    # occamy 的 <td> 基准表剥标签后数字拼成一串成为“最长段落”）
+    body = re.sub(r'<table.*?</table>', ' ', body, flags=re.S | re.I)
 
     def is_decoration(s):
         s = s.strip()
@@ -439,6 +447,11 @@ def extract_readme_summary(readme_text):
             text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
             text = re.sub(r'\s+', ' ', text).strip()
             if is_navigation_text(text):
+                continue
+            # 2026-09-18 兑底：数字密度判定——剥掉数字/空白/标点后剩余不足一半，
+            # 视为表格残渣/基准数据糊，判废
+            stripped = re.sub(r'[\d\s.,%+\-\u2013\u2014:;()/]', '', text)
+            if len(text) > 0 and len(stripped) < len(text) * 0.5:
                 continue
             if len(text) >= 15:
                 # 长文本：记录最长段落，不立即返回
