@@ -632,16 +632,19 @@ def fetch_huggingface():
         mid = m["title"]
         target_date = m["date"]
 
-        # README 取模型简介（使用 v4 提取规则）
+        # README 取全文落盘（2026-10-13 interpret 步改造：LLM 直读全文总结，
+        # 规则提取逻辑作废——summary 字段不再产出，review/interpret/render 改用
+        # readme 与 readme_interpretation）
         try:
             r_readme = requests.get(
                 f"https://huggingface.co/{mid}/raw/main/README.md",
                 timeout=10, headers=HEADERS
             )
-            readme_text = r_readme.text
-            m["summary"] = extract_readme_summary(readme_text)
+            m["readme"] = r_readme.text
         except:
-            m["summary"] = ""
+            m["readme"] = ""
+        # 旧提取逻辑（作废保留备查）：
+        # m["summary"] = extract_readme_summary(readme_text)
 
         # commits页取本周更新日志
         try:
@@ -671,12 +674,12 @@ def fetch_huggingface():
 
         time.sleep(0.3)
 
-    # 清理内部字段
+    # 清理内部字段（2026-10-13：summary→readme 全文，interpret 步直读）
     items = []
     for m in models:
         items.append({
             "title": m["title"],
-            "summary": m["summary"],
+            "readme": m["readme"],
             "last_commit": m["last_commit"],
             "date": m["date"],
             "downloads": m["downloads"],

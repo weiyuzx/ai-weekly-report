@@ -219,9 +219,9 @@ def filter_huggingface(items):
     for item in items:
         title = item.get("title", "")
         pipeline = item.get("pipeline_tag", "")
-        summary = item.get("summary", "")
         num_params = int(item.get("num_parameters", 0) or 0)
-        full_text = f"{title} {pipeline} {summary}"
+        # 2026-10-13：HF summary 字段作废（规则提取不准），黑名单只匹配 title+pipeline
+        full_text = f"{title} {pipeline}"
 
         if matches_blacklist(full_text, TITLE_BLACKLIST):
             continue

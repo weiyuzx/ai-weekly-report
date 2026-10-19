@@ -5,6 +5,8 @@ __pycache__/
 # 数据
 raw/
 filtered/
+reviewed/
+interpreted/
 
 # 输出产物
 output/

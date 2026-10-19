@@ -40,11 +40,22 @@ STATS = {"hit": 0, "translated": 0, "failed": 0, "api_calls": 0}
 
 
 def find_latest_filtered_dir():
-    """找到 filtered/ 下日期最新的文件夹"""
-    if not FILTERED_DIR.exists():
+    """数据目录：interpreted/reviewed/filtered 取日期最新，同级优先 interpreted
+    （六步流水线：interpret 集成后 interpreted 是第五步数据源；
+    interpret 缺席时回退 reviewed，再回退 filtered）"""
+    names = set()
+    for base in ("interpreted", "reviewed", "filtered"):
+        d = SCRIPT_DIR / base
+        if d.exists():
+            names |= {s.name for s in d.iterdir() if s.is_dir()}
+    if not names:
         return None
-    dirs = sorted(d for d in FILTERED_DIR.iterdir() if d.is_dir())
-    return dirs[-1] if dirs else None
+    latest = sorted(names)[-1]
+    for base in ("interpreted", "reviewed", "filtered"):
+        p = SCRIPT_DIR / base / latest
+        if p.exists():
+            return p
+    return None
 
 
 def text_key(text):
@@ -161,7 +172,8 @@ def collect_tasks(data_dir):
         with open(fp, "r", encoding="utf-8") as f:
             data = json.load(f)
         items = data.get("items", [])
-        fields = ("summary", "last_commit") if name == "huggingface" else ("summary",)
+        # 2026-10-13：HF summary 字段作废（interpret 产中文不走 gtx），HF 只翻 last_commit
+        fields = ("last_commit",) if name == "huggingface" else ("summary",)
         cnt = 0
         for idx, item in enumerate(items):
             for fld in fields:
