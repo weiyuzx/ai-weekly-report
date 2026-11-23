@@ -91,7 +91,10 @@ h2.news { background: linear-gradient(135deg, #667eea, #764ba2); background: -we
   margin: 4px 0 0 0;
   line-height: 1.6;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  /* 2026-11-06：4→6 行；interpretation 限 100 字≈4.3~5 行，4 行必触发 clamp，
+     wkhtmltopdf 旧 WebKit 的 clamp 省略号错位渲染成词间「···」（卡片1/3/5事故）。
+     6 行容纳~138字留足余量，截断不再触发 */
+  -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

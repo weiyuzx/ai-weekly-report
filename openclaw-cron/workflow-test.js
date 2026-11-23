@@ -8,7 +8,13 @@ const chat = 'chat:oc_b254a7eaff866ce3495b70a4aa254a28';
 // interpret 降级：失败条目不带字段，render 遇空不显示正文（只显更新内容）
 const BATCH = 25;
 const INTERPRET_PROMPT = '阅读README，用通俗易懂的中文介绍这个模型是什么，100字以内。\n\n严格输出 JSON，勿输出其它内容：\n{"interpretation":"中文介绍"}\n\n【材料】\n';
-const PROMPT_HEAD = '判断以下条目是否属于大模型（LLM）与智能体（Agent）方向，是则保留，不是则剔除。不确定时倾向保留。\n\n严格输出 JSON，勿输出其它内容：\n{"results":[{"id":编号,"verdict":"keep|kill","reason":"一句话中文理由"}]}\n\n【待判条目】\n';
+const PROMPT_HEAD = '判断以下条目是否属于大模型（LLM）与智能体（Agent）方向，是则保留，不是则剔除。不确定时倾向保留。注意：头部AI企业（OpenAI、Anthropic、谷歌、Meta、DeepSeek、阿里等）与算力芯片巨头（英伟达、AMD、台积电等）的重大动态——IPO、融资、核心人事变动、战略调整——影响大模型行业格局，属保留范围；非AI企业或中小公司的同类消息仍剔除。
+
+严格输出 JSON，勿输出其它内容：
+{"results":[{"id":编号,"verdict":"keep|kill","reason":"一句话中文理由"}]}
+
+【待判条目】
+';
 const pipeline1 = 'cd ' + dir + ' && echo ==STEP==fetch && ' + py + ' fetch.py'
   + ' && echo ==STEP==filter && ' + py + ' filter.py';
 const pipeline2 = 'cd ' + dir + ' && echo ==STEP==translate && ' + py + ' translate.py'
